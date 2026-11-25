@@ -1,0 +1,341 @@
+[
+  {
+    "title": "Project scaffolding: monorepo, React Vite frontend, Spring Boot backend, MySQL config",
+    "slug": "scaffolding",
+    "story": "As a developer, I want the monorepo initialized with React Vite (pnpm) + Spring Boot (Maven) + MySQL connection so the team can start building features on a working skeleton.",
+    "ac": [
+      "Given a fresh clone When I run `pnpm install` in /frontend and `mvn clean install` in /backend Then both build successfully with zero errors",
+      "Given the Spring Boot app starts When it connects to MySQL Then the schema is auto-created via JPA/Hibernate and the app responds on /api/health",
+      "Given the React dev server starts When I open http://localhost:5173 Then a placeholder homepage renders and API proxy to Spring Boot works"
+    ],
+    "mvp": "MVP-1",
+    "size": "M",
+    "moscow": "must",
+    "req": "REQ-mn8y-project-scaffolding-monorepo-with-frontend,REQ-1w8h-mysql-database-with-spring-data-jpa-entiti",
+    "est": 40,
+    "tokens": "~25k",
+    "steps": 6,
+    "test_cmd": "cd frontend && pnpm build && cd ../backend && mvn test",
+    "reg_cmd": "cd frontend && pnpm build && cd ../backend && mvn test"
+  },
+  {
+    "title": "Design system: Tailwind config, design tokens, reusable UI components, dark/light theme",
+    "slug": "design-system",
+    "story": "As a user, I want a polished and consistent visual experience with dark/light mode support across the entire application.",
+    "ac": [
+      "Given the design system is configured When I view any page Then the typography, colors, and spacing follow the design tokens consistently",
+      "Given system prefers dark mode When the app loads Then it renders in dark mode; When I toggle manually Then the preference persists across sessions",
+      "Given the component library exists When I use Button, Input, Card, Badge, Modal, Drawer Then each renders correctly in both light and dark modes"
+    ],
+    "mvp": "MVP-1",
+    "size": "M",
+    "moscow": "must",
+    "req": "REQ-zbew-design-tokens-and-cohesive-component-libra,REQ-nw67-dark-light-mode-with-system-preference-det",
+    "deps": "T-scaffolding",
+    "est": 35,
+    "tokens": "~20k",
+    "steps": 5,
+    "test_cmd": "cd frontend && pnpm test && pnpm build",
+    "reg_cmd": "cd frontend && pnpm test && pnpm build"
+  },
+  {
+    "title": "Database schema: JPA entities, repositories, seed data for fashion products",
+    "slug": "db-schema-seed",
+    "story": "As a developer, I want the full database schema with JPA entities and 15-20 seeded fashion products so the storefront has real data to display.",
+    "ac": [
+      "Given the Spring Boot app starts When Hibernate runs Then all entities (Product, ProductVariant, Category, User, Cart, CartItem, Order, OrderItem, Review) are created in MySQL",
+      "Given the data seeder runs When the app starts for the first time Then 15-20 fashion products with variants (size/color), categories, and placeholder images from picsum.photos are inserted",
+      "Given the REST API endpoint GET /api/products exists When called Then it returns paginated product data with variants"
+    ],
+    "mvp": "MVP-1",
+    "size": "M",
+    "moscow": "must",
+    "req": "REQ-1w8h-mysql-database-with-spring-data-jpa-entiti,REQ-vysq-seed-data-15-20-fashion-products-with-vari",
+    "deps": "T-scaffolding",
+    "est": 40,
+    "tokens": "~22k",
+    "steps": 6,
+    "test_cmd": "cd backend && mvn test",
+    "reg_cmd": "cd backend && mvn test"
+  },
+  {
+    "title": "Storefront homepage: hero banner, featured collections, category navigation",
+    "slug": "homepage",
+    "story": "As a shopper, I want an attractive homepage with a hero banner, featured product collections, and category navigation so I can discover products easily.",
+    "ac": [
+      "Given I open the homepage When it loads Then I see a hero banner, at least 2 featured collections, and a category navigation bar/sidebar",
+      "Given I click a category When the page updates Then the product grid filters to show only products in that category",
+      "Given I view the homepage on mobile (< 768px) When I interact with it Then all elements are responsive and usable with touch"
+    ],
+    "mvp": "MVP-1",
+    "size": "M",
+    "moscow": "must",
+    "req": "REQ-4k3v-responsive-storefront-homepage-with-hero-f",
+    "deps": "T-design-system,T-db-schema-seed",
+    "est": 35,
+    "tokens": "~20k",
+    "steps": 5,
+    "test_cmd": "cd frontend && pnpm test && pnpm build",
+    "reg_cmd": "cd frontend && pnpm test && cd ../backend && mvn test"
+  },
+  {
+    "title": "Product search and sort with debounced input",
+    "slug": "search-sort",
+    "story": "As a shopper, I want to search for products by name and sort results by price or newness so I can find what I want quickly.",
+    "ac": [
+      "Given I type in the search bar When I pause typing for 300ms Then results filter in real-time matching product name or description",
+      "Given search results are displayed When I select Sort by Price Low-High Then products reorder by ascending price; Sort by Price High-Low reorders descending",
+      "Given a search query returns no results When the empty state renders Then I see a friendly message with a suggestion to clear filters"
+    ],
+    "mvp": "MVP-1",
+    "size": "S",
+    "moscow": "must",
+    "req": "REQ-gesk-product-search-and-sort-functionality",
+    "deps": "T-homepage",
+    "est": 25,
+    "tokens": "~12k",
+    "steps": 4,
+    "test_cmd": "cd frontend && pnpm test && cd ../backend && mvn test",
+    "reg_cmd": "cd frontend && pnpm test && cd ../backend && mvn test"
+  },
+  {
+    "title": "Product detail page: gallery, variants, stock, reviews preview, add-to-cart",
+    "slug": "pdp",
+    "story": "As a shopper, I want to see product details with an image gallery, select size/color variants, check stock, and read reviews before adding to cart.",
+    "ac": [
+      "Given I click a product card When the PDP loads Then I see an image gallery (thumbnail navigation), product name, price, description, and stock status badge",
+      "Given the product has size and color variants When I select a combination Then the price, stock status, and main image update accordingly",
+      "Given reviews exist for the product When the PDP loads Then I see an average rating, review count, and the 3 most recent reviews with a View All link"
+    ],
+    "mvp": "MVP-1",
+    "size": "M",
+    "moscow": "must",
+    "req": "REQ-caht-product-detail-page-with-image-gallery-var",
+    "deps": "T-db-schema-seed,T-design-system",
+    "est": 35,
+    "tokens": "~20k",
+    "steps": 5,
+    "test_cmd": "cd frontend && pnpm test && pnpm build",
+    "reg_cmd": "cd frontend && pnpm test && cd ../backend && mvn test"
+  },
+  {
+    "title": "Shopping cart: drawer, quantity controls, promo code, persistent state",
+    "slug": "cart",
+    "story": "As a shopper, I want a shopping cart that persists across sessions with quantity controls, item removal, promo code entry, and a live subtotal.",
+    "ac": [
+      "Given I click Add to Cart on a PDP When the cart drawer opens Then the item appears with correct variant, quantity, and subtotal; badge count updates",
+      "Given items are in the cart When I increase/decrease quantity or remove an item Then the subtotal recalculates in real-time",
+      "Given I am a guest When I close the browser and reopen Then my cart items persist via localStorage; Given I am logged in Then cart persists via API/DB",
+      "Given I enter a valid promo code When I apply it Then the discount is reflected in the total; invalid codes show an error message"
+    ],
+    "mvp": "MVP-1",
+    "size": "M",
+    "moscow": "must",
+    "req": "REQ-h6zk-persistent-shopping-cart-with-add-remove-u",
+    "deps": "T-pdp,T-db-schema-seed",
+    "est": 35,
+    "tokens": "~22k",
+    "steps": 6,
+    "test_cmd": "cd frontend && pnpm test && cd ../backend && mvn test",
+    "reg_cmd": "cd frontend && pnpm test && cd ../backend && mvn test"
+  },
+  {
+    "title": "Customer auth: signup, login, profile, JWT httpOnly cookies, Spring Security",
+    "slug": "auth",
+    "story": "As a customer, I want to sign up, log in, and manage my profile so I can track my orders and have a personalized experience.",
+    "ac": [
+      "Given I am on the signup page When I submit valid email, password, and name Then my account is created, JWT cookie is set, and I am redirected to the homepage",
+      "Given I am on the login page When I submit valid credentials Then JWT httpOnly cookie is set and I see my name in the header; invalid credentials show an error",
+      "Given I am logged in When I visit my profile page Then I see my name, email, and can update my details; When I log out Then the JWT cookie is cleared"
+    ],
+    "mvp": "MVP-2",
+    "size": "M",
+    "moscow": "must",
+    "req": "REQ-yn28-customer-authentication-signup-login-profi",
+    "deps": "T-scaffolding,T-design-system",
+    "est": 40,
+    "tokens": "~25k",
+    "steps": 6,
+    "test_cmd": "cd backend && mvn test && cd ../frontend && pnpm test",
+    "reg_cmd": "cd backend && mvn test && cd ../frontend && pnpm test"
+  },
+  {
+    "title": "Multi-step checkout: shipping form, shipping options, order review",
+    "slug": "checkout",
+    "story": "As a shopper, I want a multi-step checkout with form validation, shipping method selection, and an order review step before payment.",
+    "ac": [
+      "Given I proceed to checkout When the shipping form loads Then I see fields for name, email, address, city, state, zip, phone with real-time validation",
+      "Given I complete the shipping form When I proceed Then I see shipping options (standard/express) with estimated delivery dates and prices",
+      "Given I select a shipping option When I proceed to review Then I see a full order summary with items, shipping, and total before payment"
+    ],
+    "mvp": "MVP-2",
+    "size": "M",
+    "moscow": "must",
+    "req": "REQ-ysc7-multi-step-checkout-flow-with-form-validat",
+    "deps": "T-cart,T-auth",
+    "est": 35,
+    "tokens": "~22k",
+    "steps": 6,
+    "test_cmd": "cd frontend && pnpm test && cd ../backend && mvn test",
+    "reg_cmd": "cd frontend && pnpm test && cd ../backend && mvn test"
+  },
+  {
+    "title": "Stripe payment integration and order confirmation page",
+    "slug": "payment",
+    "story": "As a shopper, I want to pay securely via Stripe and see a confirmation page after successful payment.",
+    "ac": [
+      "Given I am on the payment step When Stripe Elements loads Then I can enter card details in a secure embedded form",
+      "Given I submit payment with a valid test card (4242...) When Stripe processes it Then the order is created in the DB with status PAID and I am redirected to the confirmation page",
+      "Given payment succeeds When the confirmation page loads Then I see order number, item summary, shipping address, payment total, and estimated delivery"
+    ],
+    "mvp": "MVP-2",
+    "size": "M",
+    "moscow": "must",
+    "req": "REQ-6xpk-stripe-test-mode-payment-integration,REQ-jg52-order-confirmation-page-with-order-summary",
+    "deps": "T-checkout",
+    "est": 40,
+    "tokens": "~25k",
+    "steps": 6,
+    "test_cmd": "cd backend && mvn test && cd ../frontend && pnpm test",
+    "reg_cmd": "cd backend && mvn test && cd ../frontend && pnpm test"
+  },
+  {
+    "title": "Order history page for authenticated users",
+    "slug": "order-history",
+    "story": "As a registered customer, I want to view my past orders with status and details so I can track my purchases.",
+    "ac": [
+      "Given I am logged in When I visit My Orders Then I see a list of past orders with order number, date, status, and total",
+      "Given I click on an order When the detail view opens Then I see all items, quantities, prices, shipping address, and status timeline",
+      "Given I have no past orders When I visit My Orders Then I see a friendly empty state with a Shop Now link"
+    ],
+    "mvp": "MVP-2",
+    "size": "S",
+    "moscow": "must",
+    "req": "REQ-04d7-order-history-for-authenticated-users",
+    "deps": "T-payment,T-auth",
+    "est": 25,
+    "tokens": "~12k",
+    "steps": 4,
+    "test_cmd": "cd frontend && pnpm test && cd ../backend && mvn test",
+    "reg_cmd": "cd frontend && pnpm test && cd ../backend && mvn test"
+  },
+  {
+    "title": "Admin dashboard: product CRUD and inventory management",
+    "slug": "admin-products",
+    "story": "As an admin, I want to create, edit, and delete products with variants and manage inventory levels from a dashboard.",
+    "ac": [
+      "Given I am logged in as admin When I visit /admin/products Then I see a paginated product table with search, sort, and Create Product button",
+      "Given I click Create Product When I fill in name, description, price, category, images, and variants Then the product is saved and appears in the list",
+      "Given I edit a product variant stock When I save Then the inventory count updates in the database and the storefront reflects the change"
+    ],
+    "mvp": "MVP-3",
+    "size": "M",
+    "moscow": "must",
+    "req": "REQ-3qmw-admin-dashboard-product-crud-inventory-man",
+    "deps": "T-auth,T-db-schema-seed",
+    "est": 40,
+    "tokens": "~25k",
+    "steps": 6,
+    "test_cmd": "cd frontend && pnpm test && cd ../backend && mvn test",
+    "reg_cmd": "cd frontend && pnpm test && cd ../backend && mvn test"
+  },
+  {
+    "title": "Admin dashboard: order management and status updates",
+    "slug": "admin-orders",
+    "story": "As an admin, I want to view all orders, search/filter them, and update order statuses so I can manage fulfillment.",
+    "ac": [
+      "Given I am logged in as admin When I visit /admin/orders Then I see a paginated order list with status filters (all/pending/processing/shipped/delivered/cancelled)",
+      "Given I click an order When the detail view opens Then I see customer info, items, payment details, and a status dropdown to update the order",
+      "Given I change an order status to SHIPPED When I save Then the status updates in DB and the customer sees the updated status in their order history"
+    ],
+    "mvp": "MVP-3",
+    "size": "M",
+    "moscow": "must",
+    "req": "REQ-93rg-admin-dashboard-order-management-and-statu",
+    "deps": "T-admin-products,T-order-history",
+    "est": 30,
+    "tokens": "~18k",
+    "steps": 5,
+    "test_cmd": "cd frontend && pnpm test && cd ../backend && mvn test",
+    "reg_cmd": "cd frontend && pnpm test && cd ../backend && mvn test"
+  },
+  {
+    "title": "Empty, loading, and error states across all views",
+    "slug": "states-polish",
+    "story": "As a user, I want to see polished loading skeletons, meaningful empty states, and graceful error handling so the app never feels broken.",
+    "ac": [
+      "Given any data-fetching view is loading When the API call is in progress Then skeleton loaders render in place of content (not spinners)",
+      "Given an API call fails When the error state renders Then I see a user-friendly message with a Retry button that re-fetches data",
+      "Given a list view has no data When the empty state renders Then I see an illustration/icon with a helpful message and a CTA"
+    ],
+    "mvp": "MVP-3",
+    "size": "S",
+    "moscow": "must",
+    "req": "REQ-5hhp-empty-loading-and-error-states-for-all-dat",
+    "deps": "T-homepage,T-pdp,T-cart",
+    "est": 25,
+    "tokens": "~12k",
+    "steps": 4,
+    "test_cmd": "cd frontend && pnpm test && pnpm build",
+    "reg_cmd": "cd frontend && pnpm test && cd ../backend && mvn test"
+  },
+  {
+    "title": "Accessibility audit and fixes: keyboard nav, ARIA, contrast",
+    "slug": "a11y",
+    "story": "As a user with accessibility needs, I want all interactive elements to be keyboard navigable with proper ARIA labels and sufficient contrast.",
+    "ac": [
+      "Given I tab through the app When I reach interactive elements Then each has a visible focus indicator and logical tab order",
+      "Given I use a screen reader When interactive elements are focused Then ARIA labels correctly describe the element purpose",
+      "Given the design tokens define colors When checked against WCAG 2.1 AA Then all text meets minimum contrast ratios (4.5:1 normal, 3:1 large)"
+    ],
+    "mvp": "MVP-3",
+    "size": "S",
+    "moscow": "must",
+    "req": "REQ-b1e6-accessibility-keyboard-navigation-aria-lab",
+    "deps": "T-states-polish",
+    "est": 20,
+    "tokens": "~10k",
+    "steps": 3,
+    "test_cmd": "cd frontend && pnpm build",
+    "reg_cmd": "cd frontend && pnpm test && cd ../backend && mvn test"
+  },
+  {
+    "title": "SEO meta tags and semantic HTML across all pages",
+    "slug": "seo",
+    "story": "As the site owner, I want proper meta tags and semantic HTML on all pages so search engines can index the storefront effectively.",
+    "ac": [
+      "Given I inspect any page When I check the head tag Then I see unique title, description, and Open Graph (og:title, og:image, og:description) meta tags",
+      "Given the HTML structure When analyzed Then it uses semantic elements (header, nav, main, section, article, footer) throughout"
+    ],
+    "mvp": "MVP-3",
+    "size": "S",
+    "moscow": "should",
+    "req": "REQ-9dp1-seo-meta-tags-and-semantic-html",
+    "deps": "T-homepage,T-pdp",
+    "est": 20,
+    "tokens": "~8k",
+    "steps": 3,
+    "test_cmd": "cd frontend && pnpm build",
+    "reg_cmd": "cd frontend && pnpm test && cd ../backend && mvn test"
+  },
+  {
+    "title": "End-to-end verification: full build, test suite, live smoke check",
+    "slug": "e2e-verify",
+    "story": "As a developer, I want to verify the entire app builds, all tests pass, and the live app serves pages correctly before release.",
+    "ac": [
+      "Given the full project When I run frontend build and backend build Then both succeed with zero errors",
+      "Given all test suites When run together Then all tests pass with no failures",
+      "Given the app is running live When I navigate to homepage, PDP, cart, checkout, and admin Then each page renders correctly with no console errors"
+    ],
+    "mvp": "MVP-3",
+    "size": "S",
+    "moscow": "must",
+    "req": "REQ-7kdm-end-to-end-verification-build-test-live-sm",
+    "deps": "T-a11y,T-seo,T-admin-orders",
+    "est": 20,
+    "tokens": "~8k",
+    "steps": 3,
+    "test_cmd": "cd frontend && pnpm test && pnpm build && cd ../backend && mvn test",
+    "reg_cmd": "cd frontend && pnpm test && pnpm build && cd ../backend && mvn test"
+  }
+]
