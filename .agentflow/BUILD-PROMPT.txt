@@ -1,0 +1,20 @@
+Start a CLEAN BUILD LOOP session for "TEST-ADM-APP" (balanced mode).
+
+CONTEXT HYGIENE (do NOT pollute context):
+- Read ONLY: .agentflow/STATE.md, .agentflow/BUILD-BRIEF.md, and the single active ticket file below.
+- For UI craft standards, load .agentflow/skills/frontend-and-ui-craft/SKILL.md.
+- Do NOT read historical questions/, events/, or unrelated docs.
+
+TARGET TICKETS FOR THIS CLEAN SESSION (max 2 before context rotation):
+  - T-079s-scaffolding: Project scaffolding: monorepo, React Vite frontend, Spring Boot backend, MySQL config (.agentflow/tickets/T-079s-scaffolding.md)
+  - T-1f2w-pdp: Product detail page: gallery, variants, stock, reviews preview, add-to-cart (.agentflow/tickets/T-1f2w-pdp.md)
+
+REPEAT THIS LOOP FOR EACH TICKET ABOVE:
+1. /af-edit-plan + /af-start-ticket -> create/verify manifest (SA1 applies in rapid/balanced for src/+tests), snapshot git baseline, create branch ticket/<id> if using branches.
+2. Build complete cohesive vertical slice (code + polished responsive styles/states + unit/integration tests).
+3. /af-verify -> run tests, build, lint, AND live runtime smoke check (start/render app, test user flow, confirm zero console errors).
+4. /af-diff-check -> /af-review (solo structured self-check + runtime re-verify in rapid/balanced; independent in strict) -> /af-done (log actual_minutes & approx_tokens).
+5. Refresh dashboard & next brief: run `node .agentflow/report.js` and `node .agentflow/build.js`, then commit ticket work cleanly.
+
+WHEN THIS BATCH FINISHES (or if context grows large):
+STOP coding, confirm clean git status, print the updated prompt from .agentflow/BUILD-PROMPT.txt, and ask me to open a new clean session for the next batch.
