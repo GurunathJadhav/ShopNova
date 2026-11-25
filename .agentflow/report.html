@@ -1,0 +1,878 @@
+<!DOCTYPE html>
+<html lang="en" data-theme="dark">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>TEST-ADM-APP — Agentflow Project Status Dashboard</title>
+  <style>
+    :root, [data-theme="dark"] {
+      --bg: #0b0f19;
+      --surface: #111827;
+      --surface-2: #192234;
+      --border: #263147;
+      --text: #f1f5f9;
+      --muted: #94a3b8;
+      --accent: #6366f1;
+      --accent-soft: rgba(99, 102, 241, 0.16);
+      --green: #10b981;
+      --green-soft: rgba(16, 185, 129, 0.16);
+      --amber: #f59e0b;
+      --amber-soft: rgba(245, 158, 11, 0.16);
+      --rose: #f43f5e;
+      --rose-soft: rgba(244, 63, 94, 0.16);
+      --sky: #0ea5e9;
+      --shadow: 0 10px 30px rgba(0, 0, 0, 0.35);
+    }
+    [data-theme="light"] {
+      --bg: #f8fafc;
+      --surface: #ffffff;
+      --surface-2: #f1f5f9;
+      --border: #e2e8f0;
+      --text: #0f172a;
+      --muted: #64748b;
+      --accent: #4f46e5;
+      --accent-soft: rgba(79, 70, 229, 0.1);
+      --green: #059669;
+      --green-soft: rgba(5, 150, 105, 0.12);
+      --amber: #d97706;
+      --amber-soft: rgba(217, 119, 6, 0.12);
+      --rose: #e11d48;
+      --rose-soft: rgba(225, 29, 72, 0.12);
+      --sky: #0284c7;
+      --shadow: 0 6px 20px rgba(15, 23, 42, 0.06);
+    }
+    * { box-sizing: border-box; }
+    body {
+      margin: 0;
+      font-family: Inter, -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, sans-serif;
+      background: var(--bg);
+      color: var(--text);
+      line-height: 1.5;
+      -webkit-font-smoothing: antialiased;
+    }
+    code {
+      font-family: ui-monospace, SFMono-Regular, Menlo, Consolas, monospace;
+      font-size: 0.85em;
+      background: var(--surface-2);
+      padding: 2px 6px;
+      border-radius: 5px;
+      border: 1px solid var(--border);
+    }
+    .container { max-width: 1320px; margin: 0 auto; padding: 24px 20px 64px; }
+
+    /* Top Header */
+    .topbar {
+      display: flex; flex-wrap: wrap; justify-content: space-between; align-items: flex-start;
+      gap: 16px; padding-bottom: 20px; border-bottom: 1px solid var(--border); margin-bottom: 24px;
+    }
+    .brand { display: flex; flex-direction: column; gap: 6px; }
+    .brand-row { display: flex; align-items: center; gap: 10px; flex-wrap: wrap; }
+    h1 { margin: 0; font-size: 1.6rem; font-weight: 700; letter-spacing: -0.02em; }
+    .subtitle { color: var(--muted); font-size: 0.92rem; max-width: 72ch; }
+    .pill {
+      display: inline-flex; align-items: center; gap: 6px; padding: 3px 10px;
+      border-radius: 999px; font-size: 0.76rem; font-weight: 600;
+      border: 1px solid var(--border); background: var(--surface-2); color: var(--text);
+      text-transform: uppercase; letter-spacing: 0.04em;
+    }
+    .pill.accent { background: var(--accent-soft); border-color: rgba(99,102,241,0.35); color: var(--accent); }
+    .pill.green { background: var(--green-soft); border-color: rgba(16,185,129,0.35); color: var(--green); }
+    .pill.amber { background: var(--amber-soft); border-color: rgba(245,158,11,0.35); color: var(--amber); }
+    .pill.rose { background: var(--rose-soft); border-color: rgba(244,63,94,0.35); color: var(--rose); }
+
+    .actions { display: flex; align-items: center; gap: 10px; flex-wrap: wrap; }
+    .meta-time { color: var(--muted); font-size: 0.8rem; }
+    .btn {
+      cursor: pointer; background: var(--surface); color: var(--text); border: 1px solid var(--border);
+      border-radius: 8px; padding: 7px 12px; font-size: 0.84rem; font-weight: 600;
+      transition: border-color 0.15s, background 0.15s;
+    }
+    .btn:hover { border-color: var(--accent); background: var(--surface-2); }
+    .btn:focus-visible, input:focus-visible, select:focus-visible { outline: 2px solid var(--accent); outline-offset: 2px; }
+
+    /* KPI Bento Grid */
+    .kpi-grid {
+      display: grid; grid-template-columns: repeat(auto-fit, minmax(200px, 1fr));
+      gap: 14px; margin-bottom: 24px;
+    }
+    .kpi {
+      background: var(--surface); border: 1px solid var(--border); border-radius: 14px;
+      padding: 16px 18px; box-shadow: var(--shadow); display: flex; flex-direction: column; gap: 6px;
+    }
+    .kpi-label { font-size: 0.78rem; color: var(--muted); font-weight: 600; text-transform: uppercase; letter-spacing: 0.04em; }
+    .kpi-value { font-size: 1.75rem; font-weight: 700; letter-spacing: -0.02em; }
+    .kpi-sub { font-size: 0.82rem; color: var(--muted); }
+
+    /* Cards & Charts */
+    .grid-2 { display: grid; grid-template-columns: repeat(2, minmax(0, 1fr)); gap: 18px; margin-bottom: 20px; }
+    .grid-3 { display: grid; grid-template-columns: repeat(3, minmax(0, 1fr)); gap: 18px; margin-bottom: 20px; }
+    @media (max-width: 980px) { .grid-2, .grid-3 { grid-template-columns: 1fr; } }
+
+    .card {
+      background: var(--surface); border: 1px solid var(--border); border-radius: 14px;
+      padding: 18px 20px; box-shadow: var(--shadow); display: flex; flex-direction: column; gap: 14px;
+    }
+    .card-head { display: flex; justify-content: space-between; align-items: center; gap: 10px; flex-wrap: wrap; }
+    .card-title { margin: 0; font-size: 1rem; font-weight: 650; }
+    .card-note { font-size: 0.78rem; color: var(--muted); }
+
+    .donut-wrap { display: flex; align-items: center; gap: 22px; flex-wrap: wrap; }
+    .donut-svg { width: 170px; height: 170px; flex-shrink: 0; }
+    .donut-center-val { fill: var(--text); font-size: 26px; font-weight: 700; }
+    .donut-center-lbl { fill: var(--muted); font-size: 11px; font-weight: 500; }
+
+    .legend { display: flex; flex-direction: column; gap: 8px; flex: 1; min-width: 150px; }
+    .legend-row { display: flex; align-items: center; justify-content: space-between; gap: 10px; font-size: 0.86rem; }
+    .legend-left { display: flex; align-items: center; gap: 8px; }
+    .dot { width: 10px; height: 10px; border-radius: 3px; flex-shrink: 0; }
+    .legend-inline { display: flex; gap: 14px; flex-wrap: wrap; font-size: 0.8rem; color: var(--muted); }
+    .legend-inline span { display: inline-flex; align-items: center; gap: 6px; }
+
+    .bar-svg { width: 100%; height: auto; display: block; }
+    .axis-lbl { fill: var(--muted); font-size: 11px; }
+    .chart-hover { cursor: pointer; transition: opacity 0.15s; }
+    .chart-hover:hover { opacity: 0.82; }
+    .chart-empty { padding: 32px 12px; text-align: center; color: var(--muted); font-size: 0.9rem; border: 1px dashed var(--border); border-radius: 10px; }
+
+    /* Progress Bars */
+    .progress-list { display: flex; flex-direction: column; gap: 12px; }
+    .prog-item { display: flex; flex-direction: column; gap: 5px; }
+    .prog-top { display: flex; justify-content: space-between; font-size: 0.86rem; gap: 8px; }
+    .prog-track { height: 9px; border-radius: 999px; background: var(--surface-2); overflow: hidden; border: 1px solid var(--border); }
+    .prog-fill { height: 100%; border-radius: 999px; transition: width 0.3s ease; }
+
+    /* Filters & Table */
+    .filters { display: flex; gap: 10px; flex-wrap: wrap; align-items: center; }
+    .input, .select {
+      background: var(--surface-2); color: var(--text); border: 1px solid var(--border);
+      border-radius: 8px; padding: 7px 11px; font-size: 0.85rem;
+    }
+    .input { min-width: 220px; flex: 1; }
+    .table-wrap { overflow-x: auto; border: 1px solid var(--border); border-radius: 10px; }
+    table { width: 100%; border-collapse: collapse; font-size: 0.86rem; }
+    th, td { padding: 10px 12px; text-align: left; border-bottom: 1px solid var(--border); white-space: nowrap; }
+    th { background: var(--surface-2); color: var(--muted); font-size: 0.76rem; text-transform: uppercase; letter-spacing: 0.04em; cursor: pointer; user-select: none; }
+    td.wrap { white-space: normal; min-width: 220px; max-width: 380px; }
+    tr:last-child td { border-bottom: none; }
+    tr:hover td { background: rgba(99, 102, 241, 0.04); }
+
+    /* Activity & Health */
+    .event-list { display: flex; flex-direction: column; gap: 8px; max-height: 290px; overflow-y: auto; }
+    .event-row { display: flex; justify-content: space-between; gap: 10px; padding: 8px 10px; background: var(--surface-2); border-radius: 8px; font-size: 0.82rem; border: 1px solid var(--border); }
+    .event-ts { color: var(--muted); font-family: ui-monospace, monospace; font-size: 0.76rem; white-space: nowrap; }
+
+    /* Tooltip */
+    #tooltip {
+      position: fixed; pointer-events: none; z-index: 999; display: none;
+      background: #0f172a; color: #f8fafc; border: 1px solid #334155;
+      padding: 6px 10px; border-radius: 7px; font-size: 0.78rem; font-weight: 500;
+      box-shadow: 0 8px 20px rgba(0,0,0,0.4);
+    }
+    footer { margin-top: 28px; text-align: center; color: var(--muted); font-size: 0.8rem; }
+  </style>
+</head>
+<body>
+  <div id="tooltip"></div>
+  <div class="container">
+    <header class="topbar">
+      <div class="brand">
+        <div class="brand-row">
+          <h1>TEST-ADM-APP</h1>
+          <span class="pill accent">discovery</span>
+          <span class="pill">balanced mode</span>
+          <span class="pill green">edit lock: locked</span>
+          <span class="pill">tier 0</span>
+        </div>
+        <div class="subtitle">
+          Full-stack modern E-Commerce web application with storefront, checkout, auth, and admin dashboard · GitHub: <code>@Gurunath Jadhav</code> · Project ID: <code>af-prj-ecommerce-2026</code> · Profile: <code>web-app</code>
+          
+        </div>
+      </div>
+      <div class="actions">
+        <span class="meta-time">Updated 2026-11-25 18:33:33 UTC</span>
+        <button class="btn" id="themeBtn" type="button">Toggle Light/Dark</button>
+      </div>
+    </header>
+
+    <!-- KPI Cards -->
+    <section class="kpi-grid" aria-label="Key project metrics">
+      <div class="kpi">
+        <div class="kpi-label">Completion</div>
+        <div class="kpi-value">0%</div>
+        <div class="kpi-sub">0 of 17 tickets done · 0/17 stories</div>
+      </div>
+      <div class="kpi">
+        <div class="kpi-label">MVPs & Requirements</div>
+        <div class="kpi-value">0 / 3 MVPs</div>
+        <div class="kpi-sub">20 requirements · 5 ADRs logged</div>
+      </div>
+      <div class="kpi">
+        <div class="kpi-label">Timings (Est vs Actual)</div>
+        <div class="kpi-value">0m</div>
+        <div class="kpi-sub">Est total: 9h · No completed est yet</div>
+      </div>
+      <div class="kpi">
+        <div class="kpi-label">Token Consumption (Approx)</div>
+        <div class="kpi-value">0</div>
+        <div class="kpi-sub">Budget: 306.0k · ~0/done ticket</div>
+      </div>
+      <div class="kpi">
+        <div class="kpi-label">Quality & Verification</div>
+        <div class="kpi-value">100%</div>
+        <div class="kpi-sub">0 pass / 0 fail · 0 rework events</div>
+      </div>
+      <div class="kpi">
+        <div class="kpi-label">Risks & Blockers</div>
+        <div class="kpi-value" style="color: var(--green)">0</div>
+        <div class="kpi-sub">0 blockers · 0 open Qs · 0 risks · 0 waivers</div>
+      </div>
+    </section>
+
+    <!-- Pie / Donut Charts -->
+    <section class="grid-2">
+      <article class="card">
+        <div class="card-head">
+          <h2 class="card-title">Tickets & User Stories by Status</h2>
+          <span class="card-note">17 total items</span>
+        </div>
+        <div class="donut-wrap">
+          
+    <svg viewBox="0 0 200 200" class="donut-svg" role="img" aria-label="Complete">
+      <circle cx="100" cy="100" r="61" fill="none" stroke="#94a3b8" stroke-width="26" data-tip="Ready / Backlog: 17 (100%)" class="chart-hover"/>
+      <text x="100" y="98" text-anchor="middle" class="donut-center-val">0%</text>
+      <text x="100" y="116" text-anchor="middle" class="donut-center-lbl">Complete</text>
+    </svg>
+          <div class="legend">
+            
+              <div class="legend-row">
+                <span class="legend-left"><span class="dot" style="background:#10b981"></span>Done</span>
+                <strong>0</strong>
+              </div>
+              <div class="legend-row">
+                <span class="legend-left"><span class="dot" style="background:#6366f1"></span>In Progress</span>
+                <strong>0</strong>
+              </div>
+              <div class="legend-row">
+                <span class="legend-left"><span class="dot" style="background:#94a3b8"></span>Ready / Backlog</span>
+                <strong>17</strong>
+              </div>
+              <div class="legend-row">
+                <span class="legend-left"><span class="dot" style="background:#f43f5e"></span>Blocked</span>
+                <strong>0</strong>
+              </div>
+          </div>
+        </div>
+      </article>
+
+      <article class="card">
+        <div class="card-head">
+          <h2 class="card-title">MVP Waves & Scope Distribution</h2>
+          <span class="card-note">3 wave(s)</span>
+        </div>
+        <div class="donut-wrap">
+          
+    <svg viewBox="0 0 200 200" class="donut-svg" role="img" aria-label="MVPs Done">
+      <path d="M 100.00 26.00 A 74 74 0 0 1 138.96 162.92 L 125.27 140.81 A 48 48 0 0 0 100.00 52.00 Z" fill="#6366f1" stroke="var(--surface)" stroke-width="2" data-tip="MVP-1: 7 (41%)" class="chart-hover"/>
+<path d="M 138.96 162.92 A 74 74 0 0 1 26.32 93.17 L 52.20 95.57 A 48 48 0 0 0 125.27 140.81 Z" fill="#0ea5e9" stroke="var(--surface)" stroke-width="2" data-tip="MVP-3: 6 (35%)" class="chart-hover"/>
+<path d="M 26.32 93.17 A 74 74 0 0 1 100.00 26.00 L 100.00 52.00 A 48 48 0 0 0 52.20 95.57 Z" fill="#f59e0b" stroke="var(--surface)" stroke-width="2" data-tip="MVP-2: 4 (24%)" class="chart-hover"/>
+      <text x="100" y="98" text-anchor="middle" class="donut-center-val">0/3</text>
+      <text x="100" y="116" text-anchor="middle" class="donut-center-lbl">MVPs Done</text>
+    </svg>
+          <div class="legend">
+            
+                <div class="prog-item">
+                  <div class="prog-top">
+                    <span><span class="dot" style="display:inline-block;margin-right:6px;background:#6366f1"></span>MVP-1</span>
+                    <strong>0/7 (0%)</strong>
+                  </div>
+                  <div class="prog-track"><div class="prog-fill" style="width:0%;background:#6366f1"></div></div>
+                </div>
+                <div class="prog-item">
+                  <div class="prog-top">
+                    <span><span class="dot" style="display:inline-block;margin-right:6px;background:#0ea5e9"></span>MVP-3</span>
+                    <strong>0/6 (0%)</strong>
+                  </div>
+                  <div class="prog-track"><div class="prog-fill" style="width:0%;background:#0ea5e9"></div></div>
+                </div>
+                <div class="prog-item">
+                  <div class="prog-top">
+                    <span><span class="dot" style="display:inline-block;margin-right:6px;background:#f59e0b"></span>MVP-2</span>
+                    <strong>0/4 (0%)</strong>
+                  </div>
+                  <div class="prog-track"><div class="prog-fill" style="width:0%;background:#f59e0b"></div></div>
+                </div>
+          </div>
+        </div>
+      </article>
+    </section>
+
+    <!-- Bar Charts: Timings & Tokens -->
+    <section class="grid-2">
+      <article class="card">
+        <div class="card-head">
+          <h2 class="card-title">Estimated vs Actual Timing per Ticket</h2>
+          <div class="legend-inline">
+            <span><span class="dot" style="background:#94a3b8"></span>Estimated</span>
+            <span><span class="dot" style="background:#10b981"></span>Actual</span>
+          </div>
+        </div>
+        
+    <svg viewBox="0 0 640 230" class="bar-svg" role="img" aria-label="Estimated vs Actual">
+      
+      <line x1="48" y1="182.0" x2="624" y2="182.0" stroke="var(--border)" stroke-dasharray="none" opacity="0.9"/>
+      <text x="40" y="186.0" text-anchor="end" class="axis-lbl">0m</text>
+    
+
+      <line x1="48" y1="141.0" x2="624" y2="141.0" stroke="var(--border)" stroke-dasharray="3 4" opacity="0.55"/>
+      <text x="40" y="145.0" text-anchor="end" class="axis-lbl">12m</text>
+    
+
+      <line x1="48" y1="100.0" x2="624" y2="100.0" stroke="var(--border)" stroke-dasharray="3 4" opacity="0.55"/>
+      <text x="40" y="104.0" text-anchor="end" class="axis-lbl">23m</text>
+    
+
+      <line x1="48" y1="59.0" x2="624" y2="59.0" stroke="var(--border)" stroke-dasharray="3 4" opacity="0.55"/>
+      <text x="40" y="63.0" text-anchor="end" class="axis-lbl">35m</text>
+    
+
+      <line x1="48" y1="18.0" x2="624" y2="18.0" stroke="var(--border)" stroke-dasharray="3 4" opacity="0.55"/>
+      <text x="40" y="22.0" text-anchor="end" class="axis-lbl">46m</text>
+    
+      
+      <rect x="53.0" y="39.4" width="21.8" height="142.6" rx="3" fill="#94a3b8" class="chart-hover" data-tip="T-079s-scaffolding (Project scaffolding: monorepo, React Vite frontend, Spring Boot backend, MySQL config) · Estimated: 40m"/>
+      <rect x="78.8" y="182.0" width="21.8" height="1.0" rx="3" fill="#10b981" class="chart-hover" data-tip="T-079s-scaffolding (Project scaffolding: monorepo, React Vite frontend, Spring Boot backend, MySQL config) · Actual: 0m"/>
+      <text x="76.8" y="206" text-anchor="middle" class="axis-lbl">T-079s</text>
+    
+
+      <rect x="110.6" y="57.2" width="21.8" height="124.8" rx="3" fill="#94a3b8" class="chart-hover" data-tip="T-1f2w-pdp (Product detail page: gallery, variants, stock, reviews preview, add-to-cart) · Estimated: 35m"/>
+      <rect x="136.4" y="182.0" width="21.8" height="1.0" rx="3" fill="#10b981" class="chart-hover" data-tip="T-1f2w-pdp (Product detail page: gallery, variants, stock, reviews preview, add-to-cart) · Actual: 0m"/>
+      <text x="134.4" y="206" text-anchor="middle" class="axis-lbl">T-1f2w</text>
+    
+
+      <rect x="168.2" y="57.2" width="21.8" height="124.8" rx="3" fill="#94a3b8" class="chart-hover" data-tip="T-219m-cart (Shopping cart: drawer, quantity controls, promo code, persistent state) · Estimated: 35m"/>
+      <rect x="194.0" y="182.0" width="21.8" height="1.0" rx="3" fill="#10b981" class="chart-hover" data-tip="T-219m-cart (Shopping cart: drawer, quantity controls, promo code, persistent state) · Actual: 0m"/>
+      <text x="192.0" y="206" text-anchor="middle" class="axis-lbl">T-219m</text>
+    
+
+      <rect x="225.8" y="57.2" width="21.8" height="124.8" rx="3" fill="#94a3b8" class="chart-hover" data-tip="T-36pq-homepage (Storefront homepage: hero banner, featured collections, category navigation) · Estimated: 35m"/>
+      <rect x="251.6" y="182.0" width="21.8" height="1.0" rx="3" fill="#10b981" class="chart-hover" data-tip="T-36pq-homepage (Storefront homepage: hero banner, featured collections, category navigation) · Actual: 0m"/>
+      <text x="249.6" y="206" text-anchor="middle" class="axis-lbl">T-36pq</text>
+    
+
+      <rect x="283.4" y="75.0" width="21.8" height="107.0" rx="3" fill="#94a3b8" class="chart-hover" data-tip="T-6kx7-admin-orders (Admin dashboard: order management and status updates) · Estimated: 30m"/>
+      <rect x="309.2" y="182.0" width="21.8" height="1.0" rx="3" fill="#10b981" class="chart-hover" data-tip="T-6kx7-admin-orders (Admin dashboard: order management and status updates) · Actual: 0m"/>
+      <text x="307.2" y="206" text-anchor="middle" class="axis-lbl">T-6kx7</text>
+    
+
+      <rect x="341.0" y="92.9" width="21.8" height="89.1" rx="3" fill="#94a3b8" class="chart-hover" data-tip="T-8tth-states-polish (Empty, loading, and error states across all views) · Estimated: 25m"/>
+      <rect x="366.8" y="182.0" width="21.8" height="1.0" rx="3" fill="#10b981" class="chart-hover" data-tip="T-8tth-states-polish (Empty, loading, and error states across all views) · Actual: 0m"/>
+      <text x="364.8" y="206" text-anchor="middle" class="axis-lbl">T-8tth</text>
+    
+
+      <rect x="398.6" y="39.4" width="21.8" height="142.6" rx="3" fill="#94a3b8" class="chart-hover" data-tip="T-9zyj-payment (Stripe payment integration and order confirmation page) · Estimated: 40m"/>
+      <rect x="424.4" y="182.0" width="21.8" height="1.0" rx="3" fill="#10b981" class="chart-hover" data-tip="T-9zyj-payment (Stripe payment integration and order confirmation page) · Actual: 0m"/>
+      <text x="422.4" y="206" text-anchor="middle" class="axis-lbl">T-9zyj</text>
+    
+
+      <rect x="456.2" y="39.4" width="21.8" height="142.6" rx="3" fill="#94a3b8" class="chart-hover" data-tip="T-aywj-db-schema-seed (Database schema: JPA entities, repositories, seed data for fashion products) · Estimated: 40m"/>
+      <rect x="482.0" y="182.0" width="21.8" height="1.0" rx="3" fill="#10b981" class="chart-hover" data-tip="T-aywj-db-schema-seed (Database schema: JPA entities, repositories, seed data for fashion products) · Actual: 0m"/>
+      <text x="480.0" y="206" text-anchor="middle" class="axis-lbl">T-aywj</text>
+    
+
+      <rect x="513.8" y="57.2" width="21.8" height="124.8" rx="3" fill="#94a3b8" class="chart-hover" data-tip="T-dhn1-design-system (Design system: Tailwind config, design tokens, reusable UI components, dark/light theme) · Estimated: 35m"/>
+      <rect x="539.6" y="182.0" width="21.8" height="1.0" rx="3" fill="#10b981" class="chart-hover" data-tip="T-dhn1-design-system (Design system: Tailwind config, design tokens, reusable UI components, dark/light theme) · Actual: 0m"/>
+      <text x="537.6" y="206" text-anchor="middle" class="axis-lbl">T-dhn1</text>
+    
+
+      <rect x="571.4" y="57.2" width="21.8" height="124.8" rx="3" fill="#94a3b8" class="chart-hover" data-tip="T-f60a-checkout (Multi-step checkout: shipping form, shipping options, order review) · Estimated: 35m"/>
+      <rect x="597.2" y="182.0" width="21.8" height="1.0" rx="3" fill="#10b981" class="chart-hover" data-tip="T-f60a-checkout (Multi-step checkout: shipping form, shipping options, order review) · Actual: 0m"/>
+      <text x="595.2" y="206" text-anchor="middle" class="axis-lbl">T-f60a</text>
+    
+    </svg>
+      </article>
+
+      <article class="card">
+        <div class="card-head">
+          <h2 class="card-title">Token Consumption per Ticket (Approximate)</h2>
+          <div class="legend-inline">
+            <span><span class="dot" style="background:#6366f1"></span>Budget</span>
+            <span><span class="dot" style="background:#f59e0b"></span>Used (approx)</span>
+          </div>
+        </div>
+        
+    <svg viewBox="0 0 640 230" class="bar-svg" role="img" aria-label="Budget vs Approx Used">
+      
+      <line x1="48" y1="182.0" x2="624" y2="182.0" stroke="var(--border)" stroke-dasharray="none" opacity="0.9"/>
+      <text x="40" y="186.0" text-anchor="end" class="axis-lbl">0</text>
+    
+
+      <line x1="48" y1="141.0" x2="624" y2="141.0" stroke="var(--border)" stroke-dasharray="3 4" opacity="0.55"/>
+      <text x="40" y="145.0" text-anchor="end" class="axis-lbl">7.2k</text>
+    
+
+      <line x1="48" y1="100.0" x2="624" y2="100.0" stroke="var(--border)" stroke-dasharray="3 4" opacity="0.55"/>
+      <text x="40" y="104.0" text-anchor="end" class="axis-lbl">14.4k</text>
+    
+
+      <line x1="48" y1="59.0" x2="624" y2="59.0" stroke="var(--border)" stroke-dasharray="3 4" opacity="0.55"/>
+      <text x="40" y="63.0" text-anchor="end" class="axis-lbl">21.6k</text>
+    
+
+      <line x1="48" y1="18.0" x2="624" y2="18.0" stroke="var(--border)" stroke-dasharray="3 4" opacity="0.55"/>
+      <text x="40" y="22.0" text-anchor="end" class="axis-lbl">28.8k</text>
+    
+      
+      <rect x="53.0" y="39.4" width="21.8" height="142.6" rx="3" fill="#6366f1" class="chart-hover" data-tip="T-079s-scaffolding (Project scaffolding: monorepo, React Vite frontend, Spring Boot backend, MySQL config) · Budget: 25.0k"/>
+      <rect x="78.8" y="182.0" width="21.8" height="1.0" rx="3" fill="#f59e0b" class="chart-hover" data-tip="T-079s-scaffolding (Project scaffolding: monorepo, React Vite frontend, Spring Boot backend, MySQL config) · Approx Used: 0"/>
+      <text x="76.8" y="206" text-anchor="middle" class="axis-lbl">T-079s</text>
+    
+
+      <rect x="110.6" y="67.9" width="21.8" height="114.1" rx="3" fill="#6366f1" class="chart-hover" data-tip="T-1f2w-pdp (Product detail page: gallery, variants, stock, reviews preview, add-to-cart) · Budget: 20.0k"/>
+      <rect x="136.4" y="182.0" width="21.8" height="1.0" rx="3" fill="#f59e0b" class="chart-hover" data-tip="T-1f2w-pdp (Product detail page: gallery, variants, stock, reviews preview, add-to-cart) · Approx Used: 0"/>
+      <text x="134.4" y="206" text-anchor="middle" class="axis-lbl">T-1f2w</text>
+    
+
+      <rect x="168.2" y="56.5" width="21.8" height="125.5" rx="3" fill="#6366f1" class="chart-hover" data-tip="T-219m-cart (Shopping cart: drawer, quantity controls, promo code, persistent state) · Budget: 22.0k"/>
+      <rect x="194.0" y="182.0" width="21.8" height="1.0" rx="3" fill="#f59e0b" class="chart-hover" data-tip="T-219m-cart (Shopping cart: drawer, quantity controls, promo code, persistent state) · Approx Used: 0"/>
+      <text x="192.0" y="206" text-anchor="middle" class="axis-lbl">T-219m</text>
+    
+
+      <rect x="225.8" y="67.9" width="21.8" height="114.1" rx="3" fill="#6366f1" class="chart-hover" data-tip="T-36pq-homepage (Storefront homepage: hero banner, featured collections, category navigation) · Budget: 20.0k"/>
+      <rect x="251.6" y="182.0" width="21.8" height="1.0" rx="3" fill="#f59e0b" class="chart-hover" data-tip="T-36pq-homepage (Storefront homepage: hero banner, featured collections, category navigation) · Approx Used: 0"/>
+      <text x="249.6" y="206" text-anchor="middle" class="axis-lbl">T-36pq</text>
+    
+
+      <rect x="283.4" y="79.3" width="21.8" height="102.7" rx="3" fill="#6366f1" class="chart-hover" data-tip="T-6kx7-admin-orders (Admin dashboard: order management and status updates) · Budget: 18.0k"/>
+      <rect x="309.2" y="182.0" width="21.8" height="1.0" rx="3" fill="#f59e0b" class="chart-hover" data-tip="T-6kx7-admin-orders (Admin dashboard: order management and status updates) · Approx Used: 0"/>
+      <text x="307.2" y="206" text-anchor="middle" class="axis-lbl">T-6kx7</text>
+    
+
+      <rect x="341.0" y="113.5" width="21.8" height="68.5" rx="3" fill="#6366f1" class="chart-hover" data-tip="T-8tth-states-polish (Empty, loading, and error states across all views) · Budget: 12.0k"/>
+      <rect x="366.8" y="182.0" width="21.8" height="1.0" rx="3" fill="#f59e0b" class="chart-hover" data-tip="T-8tth-states-polish (Empty, loading, and error states across all views) · Approx Used: 0"/>
+      <text x="364.8" y="206" text-anchor="middle" class="axis-lbl">T-8tth</text>
+    
+
+      <rect x="398.6" y="39.4" width="21.8" height="142.6" rx="3" fill="#6366f1" class="chart-hover" data-tip="T-9zyj-payment (Stripe payment integration and order confirmation page) · Budget: 25.0k"/>
+      <rect x="424.4" y="182.0" width="21.8" height="1.0" rx="3" fill="#f59e0b" class="chart-hover" data-tip="T-9zyj-payment (Stripe payment integration and order confirmation page) · Approx Used: 0"/>
+      <text x="422.4" y="206" text-anchor="middle" class="axis-lbl">T-9zyj</text>
+    
+
+      <rect x="456.2" y="56.5" width="21.8" height="125.5" rx="3" fill="#6366f1" class="chart-hover" data-tip="T-aywj-db-schema-seed (Database schema: JPA entities, repositories, seed data for fashion products) · Budget: 22.0k"/>
+      <rect x="482.0" y="182.0" width="21.8" height="1.0" rx="3" fill="#f59e0b" class="chart-hover" data-tip="T-aywj-db-schema-seed (Database schema: JPA entities, repositories, seed data for fashion products) · Approx Used: 0"/>
+      <text x="480.0" y="206" text-anchor="middle" class="axis-lbl">T-aywj</text>
+    
+
+      <rect x="513.8" y="67.9" width="21.8" height="114.1" rx="3" fill="#6366f1" class="chart-hover" data-tip="T-dhn1-design-system (Design system: Tailwind config, design tokens, reusable UI components, dark/light theme) · Budget: 20.0k"/>
+      <rect x="539.6" y="182.0" width="21.8" height="1.0" rx="3" fill="#f59e0b" class="chart-hover" data-tip="T-dhn1-design-system (Design system: Tailwind config, design tokens, reusable UI components, dark/light theme) · Approx Used: 0"/>
+      <text x="537.6" y="206" text-anchor="middle" class="axis-lbl">T-dhn1</text>
+    
+
+      <rect x="571.4" y="56.5" width="21.8" height="125.5" rx="3" fill="#6366f1" class="chart-hover" data-tip="T-f60a-checkout (Multi-step checkout: shipping form, shipping options, order review) · Budget: 22.0k"/>
+      <rect x="597.2" y="182.0" width="21.8" height="1.0" rx="3" fill="#f59e0b" class="chart-hover" data-tip="T-f60a-checkout (Multi-step checkout: shipping form, shipping options, order review) · Approx Used: 0"/>
+      <text x="595.2" y="206" text-anchor="middle" class="axis-lbl">T-f60a</text>
+    
+    </svg>
+      </article>
+    </section>
+
+    <!-- Extra Insights: Breakdown + Activity + Health -->
+    <section class="grid-3">
+      <article class="card">
+        <div class="card-head">
+          <h2 class="card-title">Work Mix & Sizes</h2>
+          <span class="card-note">1d active span</span>
+        </div>
+        <div class="progress-list">
+          <div class="prog-item"><div class="prog-top"><span>User Stories</span><strong>17 (100%)</strong></div><div class="prog-track"><div class="prog-fill" style="width:100%;background:#6366f1"></div></div></div><div class="prog-item"><div class="prog-top"><span>Tasks</span><strong>0 (0%)</strong></div><div class="prog-track"><div class="prog-fill" style="width:0%;background:#0ea5e9"></div></div></div><div class="prog-item"><div class="prog-top"><span>Bugs</span><strong>0 (0%)</strong></div><div class="prog-track"><div class="prog-fill" style="width:0%;background:#f43f5e"></div></div></div><div class="prog-item"><div class="prog-top"><span>Spikes / Changes</span><strong>0 (0%)</strong></div><div class="prog-track"><div class="prog-fill" style="width:0%;background:#f59e0b"></div></div></div>
+          <div class="card-note" style="margin-top:4px;">Sizes: <strong>S:</strong> 6 · <strong>M:</strong> 11 · <strong>L:</strong> 0 · Avg time/done: <strong>0m</strong></div>
+        </div>
+      </article>
+
+      <article class="card">
+        <div class="card-head">
+          <h2 class="card-title">Quality & Governance Health</h2>
+          <span class="card-note">44 logged events</span>
+        </div>
+        <div class="progress-list">
+          <div class="prog-item">
+            <div class="prog-top"><span>Done Tickets Verified (V-*)</span><strong>0/0</strong></div>
+            <div class="prog-track"><div class="prog-fill" style="width:100%;background:#10b981"></div></div>
+          </div>
+          <div class="prog-item">
+            <div class="prog-top"><span>Done Tickets Reviewed (R-*)</span><strong>0/0</strong></div>
+            <div class="prog-track"><div class="prog-fill" style="width:100%;background:#0ea5e9"></div></div>
+          </div>
+          <div class="card-note">Open questions: <strong>0</strong> blocking / 0 total · Active blockers: <strong>0</strong></div>
+        </div>
+      </article>
+
+      <article class="card">
+        <div class="card-head">
+          <h2 class="card-title">Recent Activity</h2>
+          <span class="card-note">Latest 15</span>
+        </div>
+        <div class="event-list">
+          
+            <div class="event-row">
+              <div><strong>coverage-verified</strong><div style="color:var(--muted)">100% coverage (20 REQs -&gt; 17 tickets)</div></div>
+              <span class="event-ts">2026-11-25 18:28 UTC</span>
+            </div>
+            <div class="event-row">
+              <div><strong>ticket-created</strong> <code>T-wbd8-a11y</code><div style="color:var(--muted)">Created ticket T-wbd8-a11y: Accessibility audit and fixes: keyboard nav, ARIA, contrast</div></div>
+              <span class="event-ts">2026-11-25 18:27 UTC</span>
+            </div>
+            <div class="event-row">
+              <div><strong>ticket-created</strong> <code>T-tjc2-admin-products</code><div style="color:var(--muted)">Created ticket T-tjc2-admin-products: Admin dashboard: product CRUD and inventory management</div></div>
+              <span class="event-ts">2026-11-25 18:27 UTC</span>
+            </div>
+            <div class="event-row">
+              <div><strong>ticket-created</strong> <code>T-s34e-seo</code><div style="color:var(--muted)">Created ticket T-s34e-seo: SEO meta tags and semantic HTML across all pages</div></div>
+              <span class="event-ts">2026-11-25 18:27 UTC</span>
+            </div>
+            <div class="event-row">
+              <div><strong>ticket-created</strong> <code>T-rjh2-e2e-verify</code><div style="color:var(--muted)">Created ticket T-rjh2-e2e-verify: End-to-end verification: full build, test suite, live smoke check</div></div>
+              <span class="event-ts">2026-11-25 18:27 UTC</span>
+            </div>
+            <div class="event-row">
+              <div><strong>ticket-created</strong> <code>T-qqsn-search-sort</code><div style="color:var(--muted)">Created ticket T-qqsn-search-sort: Product search and sort with debounced input</div></div>
+              <span class="event-ts">2026-11-25 18:27 UTC</span>
+            </div>
+            <div class="event-row">
+              <div><strong>ticket-created</strong> <code>T-kyt6-order-history</code><div style="color:var(--muted)">Created ticket T-kyt6-order-history: Order history page for authenticated users</div></div>
+              <span class="event-ts">2026-11-25 18:27 UTC</span>
+            </div>
+            <div class="event-row">
+              <div><strong>ticket-created</strong> <code>T-fegr-auth</code><div style="color:var(--muted)">Created ticket T-fegr-auth: Customer auth: signup, login, profile, JWT httpOnly cookies, Spring Security</div></div>
+              <span class="event-ts">2026-11-25 18:27 UTC</span>
+            </div>
+            <div class="event-row">
+              <div><strong>ticket-created</strong> <code>T-f60a-checkout</code><div style="color:var(--muted)">Created ticket T-f60a-checkout: Multi-step checkout: shipping form, shipping options, order review</div></div>
+              <span class="event-ts">2026-11-25 18:27 UTC</span>
+            </div>
+            <div class="event-row">
+              <div><strong>ticket-created</strong> <code>T-dhn1-design-system</code><div style="color:var(--muted)">Created ticket T-dhn1-design-system: Design system: Tailwind config, design tokens, reusable UI components, dark/light theme</div></div>
+              <span class="event-ts">2026-11-25 18:27 UTC</span>
+            </div>
+            <div class="event-row">
+              <div><strong>ticket-created</strong> <code>T-aywj-db-schema-seed</code><div style="color:var(--muted)">Created ticket T-aywj-db-schema-seed: Database schema: JPA entities, repositories, seed data for fashion products</div></div>
+              <span class="event-ts">2026-11-25 18:27 UTC</span>
+            </div>
+            <div class="event-row">
+              <div><strong>ticket-created</strong> <code>T-9zyj-payment</code><div style="color:var(--muted)">Created ticket T-9zyj-payment: Stripe payment integration and order confirmation page</div></div>
+              <span class="event-ts">2026-11-25 18:27 UTC</span>
+            </div>
+            <div class="event-row">
+              <div><strong>ticket-created</strong> <code>T-8tth-states-polish</code><div style="color:var(--muted)">Created ticket T-8tth-states-polish: Empty, loading, and error states across all views</div></div>
+              <span class="event-ts">2026-11-25 18:27 UTC</span>
+            </div>
+            <div class="event-row">
+              <div><strong>ticket-created</strong> <code>T-6kx7-admin-orders</code><div style="color:var(--muted)">Created ticket T-6kx7-admin-orders: Admin dashboard: order management and status updates</div></div>
+              <span class="event-ts">2026-11-25 18:27 UTC</span>
+            </div>
+            <div class="event-row">
+              <div><strong>ticket-created</strong> <code>T-36pq-homepage</code><div style="color:var(--muted)">Created ticket T-36pq-homepage: Storefront homepage: hero banner, featured collections, category navigation</div></div>
+              <span class="event-ts">2026-11-25 18:27 UTC</span>
+            </div>
+        </div>
+      </article>
+    </section>
+
+    <!-- Interactive User Stories & Tickets Table -->
+    <section class="card">
+      <div class="card-head">
+        <h2 class="card-title">User Stories & Tickets Explorer</h2>
+        <div class="filters">
+          <input id="qSearch" class="input" type="search" placeholder="Search ID or title..." aria-label="Search tickets" />
+          <select id="qStatus" class="select" aria-label="Filter by status">
+            <option value="">All statuses</option>
+            <option value="done">Done</option>
+            <option value="in-progress">In Progress</option>
+            <option value="in-review">In Review</option>
+            <option value="ready">Ready</option>
+            <option value="backlog">Backlog</option>
+            <option value="blocked">Blocked</option>
+          </select>
+          <select id="qMvp" class="select" aria-label="Filter by MVP">
+            <option value="">All MVPs</option>
+            <option value="MVP-1">MVP-1</option><option value="MVP-3">MVP-3</option><option value="MVP-2">MVP-2</option>
+          </select>
+        </div>
+      </div>
+      <div class="table-wrap">
+        <table id="ticketsTable">
+          <thead>
+            <tr>
+              <th>Ticket</th>
+              <th>Title</th>
+              <th>MVP / Wave</th>
+              <th>Type</th>
+              <th>Status</th>
+              <th>Size</th>
+              <th>Est Time</th>
+              <th>Actual Time</th>
+              <th>Tokens (Approx)</th>
+              <th>Checks</th>
+            </tr>
+          </thead>
+          <tbody>
+            
+                <tr data-status="backlog" data-mvp="MVP-1" data-text="t-079s-scaffolding project scaffolding: monorepo, react vite frontend, spring boot backend, mysql config">
+                  <td><code>T-079s-scaffolding</code></td>
+                  <td class="wrap">Project scaffolding: monorepo, React Vite frontend, Spring Boot backend, MySQL config</td>
+                  <td>MVP-1</td>
+                  <td>story</td>
+                  <td><span class="pill ">backlog</span></td>
+                  <td>M</td>
+                  <td>40m <span class="card-note">(explicit)</span></td>
+                  <td>—</td>
+                  <td>0 / 25.0k</td>
+                  <td>V· R·</td>
+                </tr>
+                <tr data-status="backlog" data-mvp="MVP-1" data-text="t-1f2w-pdp product detail page: gallery, variants, stock, reviews preview, add-to-cart">
+                  <td><code>T-1f2w-pdp</code></td>
+                  <td class="wrap">Product detail page: gallery, variants, stock, reviews preview, add-to-cart</td>
+                  <td>MVP-1</td>
+                  <td>story</td>
+                  <td><span class="pill ">backlog</span></td>
+                  <td>M</td>
+                  <td>35m <span class="card-note">(explicit)</span></td>
+                  <td>—</td>
+                  <td>0 / 20.0k</td>
+                  <td>V· R·</td>
+                </tr>
+                <tr data-status="backlog" data-mvp="MVP-1" data-text="t-219m-cart shopping cart: drawer, quantity controls, promo code, persistent state">
+                  <td><code>T-219m-cart</code></td>
+                  <td class="wrap">Shopping cart: drawer, quantity controls, promo code, persistent state</td>
+                  <td>MVP-1</td>
+                  <td>story</td>
+                  <td><span class="pill ">backlog</span></td>
+                  <td>M</td>
+                  <td>35m <span class="card-note">(explicit)</span></td>
+                  <td>—</td>
+                  <td>0 / 22.0k</td>
+                  <td>V· R·</td>
+                </tr>
+                <tr data-status="backlog" data-mvp="MVP-1" data-text="t-36pq-homepage storefront homepage: hero banner, featured collections, category navigation">
+                  <td><code>T-36pq-homepage</code></td>
+                  <td class="wrap">Storefront homepage: hero banner, featured collections, category navigation</td>
+                  <td>MVP-1</td>
+                  <td>story</td>
+                  <td><span class="pill ">backlog</span></td>
+                  <td>M</td>
+                  <td>35m <span class="card-note">(explicit)</span></td>
+                  <td>—</td>
+                  <td>0 / 20.0k</td>
+                  <td>V· R·</td>
+                </tr>
+                <tr data-status="backlog" data-mvp="MVP-3" data-text="t-6kx7-admin-orders admin dashboard: order management and status updates">
+                  <td><code>T-6kx7-admin-orders</code></td>
+                  <td class="wrap">Admin dashboard: order management and status updates</td>
+                  <td>MVP-3</td>
+                  <td>story</td>
+                  <td><span class="pill ">backlog</span></td>
+                  <td>M</td>
+                  <td>30m <span class="card-note">(explicit)</span></td>
+                  <td>—</td>
+                  <td>0 / 18.0k</td>
+                  <td>V· R·</td>
+                </tr>
+                <tr data-status="backlog" data-mvp="MVP-3" data-text="t-8tth-states-polish empty, loading, and error states across all views">
+                  <td><code>T-8tth-states-polish</code></td>
+                  <td class="wrap">Empty, loading, and error states across all views</td>
+                  <td>MVP-3</td>
+                  <td>story</td>
+                  <td><span class="pill ">backlog</span></td>
+                  <td>S</td>
+                  <td>25m <span class="card-note">(explicit)</span></td>
+                  <td>—</td>
+                  <td>0 / 12.0k</td>
+                  <td>V· R·</td>
+                </tr>
+                <tr data-status="backlog" data-mvp="MVP-2" data-text="t-9zyj-payment stripe payment integration and order confirmation page">
+                  <td><code>T-9zyj-payment</code></td>
+                  <td class="wrap">Stripe payment integration and order confirmation page</td>
+                  <td>MVP-2</td>
+                  <td>story</td>
+                  <td><span class="pill ">backlog</span></td>
+                  <td>M</td>
+                  <td>40m <span class="card-note">(explicit)</span></td>
+                  <td>—</td>
+                  <td>0 / 25.0k</td>
+                  <td>V· R·</td>
+                </tr>
+                <tr data-status="backlog" data-mvp="MVP-1" data-text="t-aywj-db-schema-seed database schema: jpa entities, repositories, seed data for fashion products">
+                  <td><code>T-aywj-db-schema-seed</code></td>
+                  <td class="wrap">Database schema: JPA entities, repositories, seed data for fashion products</td>
+                  <td>MVP-1</td>
+                  <td>story</td>
+                  <td><span class="pill ">backlog</span></td>
+                  <td>M</td>
+                  <td>40m <span class="card-note">(explicit)</span></td>
+                  <td>—</td>
+                  <td>0 / 22.0k</td>
+                  <td>V· R·</td>
+                </tr>
+                <tr data-status="backlog" data-mvp="MVP-1" data-text="t-dhn1-design-system design system: tailwind config, design tokens, reusable ui components, dark/light theme">
+                  <td><code>T-dhn1-design-system</code></td>
+                  <td class="wrap">Design system: Tailwind config, design tokens, reusable UI components, dark/light theme</td>
+                  <td>MVP-1</td>
+                  <td>story</td>
+                  <td><span class="pill ">backlog</span></td>
+                  <td>M</td>
+                  <td>35m <span class="card-note">(explicit)</span></td>
+                  <td>—</td>
+                  <td>0 / 20.0k</td>
+                  <td>V· R·</td>
+                </tr>
+                <tr data-status="backlog" data-mvp="MVP-2" data-text="t-f60a-checkout multi-step checkout: shipping form, shipping options, order review">
+                  <td><code>T-f60a-checkout</code></td>
+                  <td class="wrap">Multi-step checkout: shipping form, shipping options, order review</td>
+                  <td>MVP-2</td>
+                  <td>story</td>
+                  <td><span class="pill ">backlog</span></td>
+                  <td>M</td>
+                  <td>35m <span class="card-note">(explicit)</span></td>
+                  <td>—</td>
+                  <td>0 / 22.0k</td>
+                  <td>V· R·</td>
+                </tr>
+                <tr data-status="backlog" data-mvp="MVP-2" data-text="t-fegr-auth customer auth: signup, login, profile, jwt httponly cookies, spring security">
+                  <td><code>T-fegr-auth</code></td>
+                  <td class="wrap">Customer auth: signup, login, profile, JWT httpOnly cookies, Spring Security</td>
+                  <td>MVP-2</td>
+                  <td>story</td>
+                  <td><span class="pill ">backlog</span></td>
+                  <td>M</td>
+                  <td>40m <span class="card-note">(explicit)</span></td>
+                  <td>—</td>
+                  <td>0 / 25.0k</td>
+                  <td>V· R·</td>
+                </tr>
+                <tr data-status="backlog" data-mvp="MVP-2" data-text="t-kyt6-order-history order history page for authenticated users">
+                  <td><code>T-kyt6-order-history</code></td>
+                  <td class="wrap">Order history page for authenticated users</td>
+                  <td>MVP-2</td>
+                  <td>story</td>
+                  <td><span class="pill ">backlog</span></td>
+                  <td>S</td>
+                  <td>25m <span class="card-note">(explicit)</span></td>
+                  <td>—</td>
+                  <td>0 / 12.0k</td>
+                  <td>V· R·</td>
+                </tr>
+                <tr data-status="backlog" data-mvp="MVP-1" data-text="t-qqsn-search-sort product search and sort with debounced input">
+                  <td><code>T-qqsn-search-sort</code></td>
+                  <td class="wrap">Product search and sort with debounced input</td>
+                  <td>MVP-1</td>
+                  <td>story</td>
+                  <td><span class="pill ">backlog</span></td>
+                  <td>S</td>
+                  <td>25m <span class="card-note">(explicit)</span></td>
+                  <td>—</td>
+                  <td>0 / 12.0k</td>
+                  <td>V· R·</td>
+                </tr>
+                <tr data-status="backlog" data-mvp="MVP-3" data-text="t-rjh2-e2e-verify end-to-end verification: full build, test suite, live smoke check">
+                  <td><code>T-rjh2-e2e-verify</code></td>
+                  <td class="wrap">End-to-end verification: full build, test suite, live smoke check</td>
+                  <td>MVP-3</td>
+                  <td>story</td>
+                  <td><span class="pill ">backlog</span></td>
+                  <td>S</td>
+                  <td>20m <span class="card-note">(explicit)</span></td>
+                  <td>—</td>
+                  <td>0 / 8.0k</td>
+                  <td>V· R·</td>
+                </tr>
+                <tr data-status="backlog" data-mvp="MVP-3" data-text="t-s34e-seo seo meta tags and semantic html across all pages">
+                  <td><code>T-s34e-seo</code></td>
+                  <td class="wrap">SEO meta tags and semantic HTML across all pages</td>
+                  <td>MVP-3</td>
+                  <td>story</td>
+                  <td><span class="pill ">backlog</span></td>
+                  <td>S</td>
+                  <td>20m <span class="card-note">(explicit)</span></td>
+                  <td>—</td>
+                  <td>0 / 8.0k</td>
+                  <td>V· R·</td>
+                </tr>
+                <tr data-status="backlog" data-mvp="MVP-3" data-text="t-tjc2-admin-products admin dashboard: product crud and inventory management">
+                  <td><code>T-tjc2-admin-products</code></td>
+                  <td class="wrap">Admin dashboard: product CRUD and inventory management</td>
+                  <td>MVP-3</td>
+                  <td>story</td>
+                  <td><span class="pill ">backlog</span></td>
+                  <td>M</td>
+                  <td>40m <span class="card-note">(explicit)</span></td>
+                  <td>—</td>
+                  <td>0 / 25.0k</td>
+                  <td>V· R·</td>
+                </tr>
+                <tr data-status="backlog" data-mvp="MVP-3" data-text="t-wbd8-a11y accessibility audit and fixes: keyboard nav, aria, contrast">
+                  <td><code>T-wbd8-a11y</code></td>
+                  <td class="wrap">Accessibility audit and fixes: keyboard nav, ARIA, contrast</td>
+                  <td>MVP-3</td>
+                  <td>story</td>
+                  <td><span class="pill ">backlog</span></td>
+                  <td>S</td>
+                  <td>20m <span class="card-note">(explicit)</span></td>
+                  <td>—</td>
+                  <td>0 / 10.0k</td>
+                  <td>V· R·</td>
+                </tr>
+          </tbody>
+        </table>
+      </div>
+    </section>
+
+    <footer>
+      Generated by Agentflow Dashboard · Run <code>node .agentflow/report.js</code> or <code>agentflow report .</code> anytime to refresh from Markdown records.
+    </footer>
+  </div>
+
+  <script>
+    (function () {
+      const root = document.documentElement;
+      const saved = localStorage.getItem("af-report-theme");
+      if (saved === "light" || saved === "dark") root.setAttribute("data-theme", saved);
+
+      document.getElementById("themeBtn").addEventListener("click", () => {
+        const next = root.getAttribute("data-theme") === "dark" ? "light" : "dark";
+        root.setAttribute("data-theme", next);
+        localStorage.setItem("af-report-theme", next);
+      });
+
+      const tip = document.getElementById("tooltip");
+      document.querySelectorAll("[data-tip]").forEach((el) => {
+        el.addEventListener("mousemove", (e) => {
+          tip.textContent = el.getAttribute("data-tip");
+          tip.style.display = "block";
+          tip.style.left = (e.clientX + 12) + "px";
+          tip.style.top = (e.clientY + 12) + "px";
+        });
+        el.addEventListener("mouseleave", () => { tip.style.display = "none"; });
+      });
+
+      const qSearch = document.getElementById("qSearch");
+      const qStatus = document.getElementById("qStatus");
+      const qMvp = document.getElementById("qMvp");
+      const rows = Array.from(document.querySelectorAll("#ticketsTable tbody tr[data-status]"));
+
+      function applyFilter() {
+        const txt = qSearch.value.trim().toLowerCase();
+        const st = qStatus.value;
+        const mvp = qMvp.value;
+        for (const r of rows) {
+          const okTxt = !txt || r.getAttribute("data-text").includes(txt);
+          const okSt = !st || r.getAttribute("data-status") === st;
+          const okMvp = !mvp || r.getAttribute("data-mvp") === mvp;
+          r.style.display = (okTxt && okSt && okMvp) ? "" : "none";
+        }
+      }
+      qSearch.addEventListener("input", applyFilter);
+      qStatus.addEventListener("change", applyFilter);
+      qMvp.addEventListener("change", applyFilter);
+    })();
+  </script>
+</body>
+</html>

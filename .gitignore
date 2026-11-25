@@ -1,0 +1,5 @@
+# Agentflow
+.agentflow/private/
+.agentflow/evidence/*.log
+.agentflow/scripts/__pycache__/
+*.pyc
